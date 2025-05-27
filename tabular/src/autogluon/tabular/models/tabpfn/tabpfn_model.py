@@ -55,15 +55,13 @@ class TabPFNModel(AbstractModel):
             # TODO: Make max_features generic
             if max_features is not None and num_features > max_features:
                 raise AssertionError(f"Max allowed features for the model is {max_features}, " f"but found {num_features} features.")
-            self.model = TabPFNClassifier(model_path="/Users/noumanriazkhan/Documents/aramco/tabpfn-v2-classifier.ckpt",
-                                          device="cpu").fit(  # TODO: Add GPU option
+            self.model = TabPFNClassifier().fit(  # TODO: Add GPU option
                 X, y
             )
         elif self.problem_type==REGRESSION:
             from tabpfn import TabPFNRegressor
             
-            self.model = TabPFNRegressor(model_path="/Users/noumanriazkhan/Documents/aramco/tabpfn-v2-regressor.ckpt",
-                                         device="cpu").fit(  # TODO: Add GPU option
+            self.model = TabPFNRegressor().fit(  # TODO: Add GPU option
                 X, y
             )
             
