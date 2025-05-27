@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from autogluon.core.constants import BINARY, MULTICLASS
+from autogluon.core.constants import BINARY, MULTICLASS, REGRESSION
 from autogluon.core.models import AbstractModel
 from autogluon.core.utils import generate_train_test_split
 from autogluon.features.generators import LabelEncoderFeatureGenerator
@@ -33,30 +33,40 @@ class TabPFNModel(AbstractModel):
         self._feature_generator = None
 
     def _fit(self, X: pd.DataFrame, y: pd.Series, **kwargs):
-        from tabpfn import TabPFNClassifier
-
         ag_params = self._get_ag_params()
         sample_rows = ag_params.get("sample_rows")
         max_features = ag_params.get("max_features")
-        max_classes = ag_params.get("max_classes")
-        if max_classes is not None and self.num_classes > max_classes:
-            # TODO: Move to earlier stage when problem_type is checked
-            raise AssertionError(f"Max allowed classes for the model is {max_classes}, " f"but found {self.num_classes} classes.")
-
         # TODO: Make sample_rows generic
         if sample_rows is not None and len(X) > sample_rows:
             X, y = self._subsample_train(X=X, y=y, num_rows=sample_rows)
         X = self.preprocess(X)
         num_features = X.shape[1]
-        # TODO: Make max_features generic
-        if max_features is not None and num_features > max_features:
-            raise AssertionError(f"Max allowed features for the model is {max_features}, " f"but found {num_features} features.")
         hyp = self._get_model_params()
         N_ensemble_configurations = hyp.get("N_ensemble_configurations")
-        self.model = TabPFNClassifier(device="cpu", N_ensemble_configurations=N_ensemble_configurations).fit(  # TODO: Add GPU option
-            X, y, overwrite_warning=True
-        )
+        
+        if self.problem_type in [BINARY, MULTICLASS]:
+            from tabpfn import TabPFNClassifier
 
+            max_classes = ag_params.get("max_classes")
+            if max_classes is not None and self.num_classes > max_classes:
+                # TODO: Move to earlier stage when problem_type is checked
+                raise AssertionError(f"Max allowed classes for the model is {max_classes}, " f"but found {self.num_classes} classes.")
+            
+            # TODO: Make max_features generic
+            if max_features is not None and num_features > max_features:
+                raise AssertionError(f"Max allowed features for the model is {max_features}, " f"but found {num_features} features.")
+            self.model = TabPFNClassifier(model_path="/Users/noumanriazkhan/Documents/aramco/tabpfn-v2-classifier.ckpt",
+                                          device="cpu").fit(  # TODO: Add GPU option
+                X, y
+            )
+        elif self.problem_type==REGRESSION:
+            from tabpfn import TabPFNRegressor
+            
+            self.model = TabPFNRegressor(model_path="/Users/noumanriazkhan/Documents/aramco/tabpfn-v2-regressor.ckpt",
+                                         device="cpu").fit(  # TODO: Add GPU option
+                X, y
+            )
+            
     # TODO: Make this generic by creating a generic `preprocess_train` and putting this logic prior to `_preprocess`.
     def _subsample_train(self, X: pd.DataFrame, y: pd.Series, num_rows: int, random_state=0) -> (pd.DataFrame, pd.Series):
         num_rows_to_drop = len(X) - num_rows
@@ -100,7 +110,7 @@ class TabPFNModel(AbstractModel):
 
     @classmethod
     def supported_problem_types(cls) -> list[str] | None:
-        return ["binary", "multiclass"]
+        return ["binary", "multiclass", "regression"]
 
     def _get_default_auxiliary_params(self) -> dict:
         """
