@@ -37,10 +37,10 @@ done
 # TODO: We should simplify this by having a single setup.py at project root, and let user call `pip install -e .`
 if [ "$EDITABLE" == "true" ]; then
   # Editable install (used outside Colab)
-  python -m pip install --upgrade --force-reinstall common/[tests]
-  python -m pip install -e core/[all,tests] -e features/ -e tabular/[all,tests] -e multimodal/[tests] -e timeseries/[all,tests] -e eda/ -e autogluon/
+  pip install --upgrade --force-reinstall common/[tests]
+  pip install -e core/[all,tests] -e features/ -e tabular/[all,tests] -e multimodal/[tests] -e timeseries/[all,tests] -e eda/ -e autogluon/
 else
   # Non-editable install (forced in Colab)
-  python -m pip install --upgrade --force-reinstall common/[tests]
-  python -m pip install core/[all,tests] features/ tabular/[all,tests] multimodal/[tests] timeseries/[all,tests] eda/ autogluon/
+  pip install --upgrade --force-reinstall common/[tests]
+  pip install core/[all,tests] features/ tabular/[all,tests] multimodal/[tests] timeseries/[all,tests] eda/ autogluon/
 fi
